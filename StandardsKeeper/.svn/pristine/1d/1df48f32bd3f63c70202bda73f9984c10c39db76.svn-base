@@ -1,0 +1,75 @@
+package com.hygenics.matutils;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * 
+ * @author Andrew Evans
+ * Copyright 2016
+ * License: Free BSD
+ *
+ * @param <T>
+ */
+public class RandomWeightedChoice<T>{
+	
+	/**
+	 * When a frequency distribution is attainable, 
+	 * @param 		distribution		The distribution of probabilities or numbers to use (a good practice is they sum to 1).
+	 * @return		The randomly weighted chosen index.
+	 */
+	public static int getRandomIndex(List<Double> distribution){
+		
+		if(distribution == null || distribution.size() ==0){
+			try{
+				throw new NullPointerException("Distribution in Random Weighted Choice Cannot Be Empty!");
+			}catch(NullPointerException e){
+				e.printStackTrace();
+				return -1;
+			}
+		}
+		
+		double sum = 0;
+		for(Double d: distribution){
+			sum += d;
+		}
+		
+		double max = Math.random()*sum;
+		double current = 0;
+		int index =-1;
+		while(current < max){
+			index += 1;
+			current += distribution.get(index);
+		}
+		
+		return index;
+	}
+	
+	
+	/**
+	 * Get the Randomly Weighted Object Choice. Objects and Distribution must be the same length.
+	 * 
+	 * @param     objects  					The objects to choose from.
+	 * @param     distribution				The distribution to use.
+	 * @return	  
+	 */
+	public T getRandomWeightedChoice(List<T> objects, List<Double> distribution){
+		int index =0;
+		if(distribution == null || distribution.size() ==0){
+			try{
+				throw new NullPointerException("Distribution and Objects in Random Weighted Choice Cannot Be Empty!");
+			}catch(NullPointerException e){
+				e.printStackTrace(); 
+			}
+		}else if(distribution.size() != objects.size()){
+			try{
+				throw new ArrayIndexOutOfBoundsException("Distribution and Objects must be of the Same Size");
+			}catch(ArrayIndexOutOfBoundsException e){
+				e.printStackTrace();
+			}
+		}
+		
+		return objects.get(this.getRandomIndex(distribution));
+	}
+	
+}

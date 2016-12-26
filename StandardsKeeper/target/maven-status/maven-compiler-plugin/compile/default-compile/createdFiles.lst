@@ -1,0 +1,8 @@
+org/aevans/simplrtek/standards/FieldObject.class
+org/aevans/simplrtek/standards/StandardsAppClient.class
+org/aevans/simplrtek/jdbc/DatabaseHandler.class
+org/aevans/simplrtek/standards/ClientConfig.class
+org/aevans/simplrtek/standards/StandardsAppClient$StatusResponse.class
+org/aevans/simplrtek/standards/StandardsAppClient$FieldResponse.class
+org/aevans/simplrtek/standards/FieldObjectWrapper.class
+org/aevans/simplrtek/jdbc/DatabaseHandler$1.class

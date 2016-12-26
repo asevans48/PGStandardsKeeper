@@ -1,0 +1,282 @@
+package com.hygenics.proxyclient;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
+import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.RestController;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
+
+import com.hygenics.jdbc.DatabaseHandler;
+import com.hygenics.matutils.RandomWeightedChoice;
+
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+
+
+/**
+ * The Initial entry point to the program. Uses a localhost to entertain calls for a proxy
+ * and handles the incoming json to determine which ip address to send.
+ * 
+ * @author aevans
+ *
+ */
+@ComponentScan(basePackages = { "com.hygenics.proxyclient","com.hygenics.jdbc" }, includeFilters = @ComponentScan.Filter(value = Component.class, type = FilterType.ANNOTATION))
+@RestController
+@SpringBootApplication
+public class ProxyRestClient {
+	
+	/**
+	 * A synchronized list of domains being worked upon. Failures must remove domains from this list.
+	 * @author aevans
+	 *
+	 */
+	private static class OperatingList{
+		private static ArrayList<String> operatingList = new ArrayList<String>();
+		
+		/**
+		 * Contains Domain ?
+		 * @param domain
+		 * @return
+		 */
+		public static synchronized boolean isContained(String domain){
+			return operatingList.contains(domain);
+		}
+		
+		/**
+		 * Add Domain
+		 * @param domain
+		 */
+		public static synchronized void addDomain(String domain){
+			operatingList.add(domain);
+		}
+		
+		/**
+		 * Remove Domain
+		 * @param domain
+		 */
+		public static synchronized void removeDomain(String domain){
+			operatingList.remove(domain);
+		}
+		
+		/**
+		 * Clear
+		 */
+		public static synchronized void clear(){
+			operatingList.clear();
+		}
+	}
+	
+	/**
+	 * Response template with status and authentication status.
+	 */
+	class Response{
+		public String response = "None";
+		public boolean status = true;
+		public boolean authenticated = true;
+	}
+	
+	/**
+	 * A Response Object for Json serialization containing a proxy.
+	 * @author aevans
+	 *
+	 */
+	class ProxyResponse extends Response{
+		public String[] proxies = null;
+		
+		ProxyResponse(){
+			super();
+		}
+	}
+	
+	/**
+	 * Stats Response.
+	 * @author aevans
+	 *
+	 */
+	class StatsResponse extends Response{
+		public String ipMap = null;
+		
+		StatsResponse(){
+			super();
+		}
+	}
+	
+	@Autowired
+	private DatabaseHandler handler;
+	
+	/**
+	 * Handle incoming request for a proxy.
+	 * 
+	 * @param number  - The number of proxies to request as an integer in json
+	 * @param ip
+	 * @param domain
+	 * @param authKey
+	 * @return
+	 */
+	@RequestMapping(value = "/getProxy", method = RequestMethod.GET,produces = "application/json")
+	@ResponseBody ProxyResponse getProxy(@RequestParam(value = "number",defaultValue = "1") int number,@RequestParam("ip") String ip,@RequestParam("domain") String domain,@RequestParam(value = "auth") String authString){
+		ProxyResponse pr = new ProxyResponse();
+		try{
+			//authenticate
+			if(this.handler.isAuthorized(authString)){
+				//call
+				if(number > 0){
+					Map<String,Object> mp = this.handler.getInactiveIPS(domain);
+					ArrayList<Double> dist = ((ArrayList<Double>) mp.get("distribution"));
+					ArrayList<String> ips = ((ArrayList<String>) mp.get("ips"));
+					String[] nips = new String[number];
+					
+					int i = 0;
+					while(i < number && ips.size() > 0){
+						int index = RandomWeightedChoice.getRandomIndex(dist);
+						nips[i]=ips.get(index);
+						ips.remove(index);
+						dist.remove(index);
+						i += 1;
+					}
+					
+					int nsize = i;
+					
+					while(i < number){
+						int index = (int) Math.random() * nsize;
+						nips[i] = ips.get(index);
+						i += 1;
+					}
+					
+					pr.response = "Obtained "+number+" proxies";
+					pr.authenticated = true;
+					pr.proxies = nips;
+					
+				}else{
+					pr.response = "Number of Specified Proxies was 0.";
+					pr.proxies = new String[0];
+				}
+			}else{
+				pr.response = "Unauthorized Access Attempt Detected.";
+				pr.status = false;
+				pr.authenticated = false;
+				pr.proxies = new String[0];
+			}
+		}catch(Exception e){
+			pr.response = "Error: \n"+e.getMessage();
+			pr.status = false;
+			pr.proxies= new String[0];
+		}
+		
+		//return
+		return pr;
+	}
+	
+
+	/**
+	 * Drop a proxy from the mapping.
+	 * 
+	 * @param ip
+	 * @param domain
+	 * @return
+	 */
+	@RequestMapping(value = "/dropProxy",method = RequestMethod.GET, produces ="text/html")
+	@ResponseBody String dropProxy(@RequestParam("ip") String ip, @RequestParam("domain") String domain,@RequestParam(value = "auth") String authKey){
+		String status = "Failure";
+		try{
+			this.handler.dropProxy(ip, domain);
+			status = "Success";
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return "<html><head></head><body><h2><blink>%s!</blink></h2></body></html>".format(status);
+	}
+	
+	/**
+	 * Drop a domain - requires authentication
+	 * @param auth
+	 */
+	@RequestMapping(value = "/dropDomain",method = RequestMethod.GET, produces = "text/html")
+	@ResponseBody String dropDomain(@RequestParam("auth") String auth,@RequestParam("domain") String domain){
+		String status = "Failure"; 
+		try{
+			this.handler.dropAllProxies(domain);
+			status = "Success";
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return "<html><head></head><body><h2><blink>%s!</blink></h2></body></html>".format(status);
+	}
+	
+	
+	/**
+	 * Refresh the Proxy List.
+	 */
+	@RequestMapping(value = "/refresh",method = RequestMethod.GET,produces = "text/html")
+	@ResponseBody String refreshList(@RequestParam(value = "auth") String authKey,@RequestParam(value = "proxies",defaultValue="none") String confPath,@RequestParam(value="isConf",defaultValue="false") boolean isConf){
+		String status = "Fail"; 
+		if(isConf){
+			this.handler.resetProxiesFromConf();
+		}else{
+			//setup system properties from the configuration path
+			this.handler.resetProxies();
+		}
+		return "<html><head></head><body><h2><blink>%s!</blink></h2></body></html>".format(status);
+	}
+	
+	/**
+	 * Truncate the ip table - requires authentication
+	 * @param auth
+	 */
+	@RequestMapping(value = "/truncate", method = RequestMethod.GET,produces = "text/html")
+	@ResponseBody String truncate(@RequestParam("auth") String auth,@RequestParam("table") String table){
+		String status = "Failure"; 
+		try{
+			this.handler.truncate(table);
+			status = "Success";
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return "<html><head></head><body><h2><blink>%s!</blink></h2></body></html>".format(status);
+	}
+	
+	
+	/**
+	 * Get a statistics response from the server.
+	 * 
+	 * @param 	auth		The authentication string.
+	 * @param   ip			The ip address to use.
+	 * @return
+	 */
+	@RequestMapping(value = "/getStats", produces ="application/json")
+	@ResponseBody StatsResponse getStats(@RequestParam("auth") String auth,@RequestParam(value = "limit",required = false, defaultValue = "10000") int limit){
+		StatsResponse statr = new StatsResponse();
+		try{
+			statr.ipMap = this.handler.getStats(limit);
+			statr.authenticated = true;
+			statr.response = "Statistics obtained";
+			statr.status = true;
+		}catch(Exception e){
+			e.printStackTrace();
+			statr.ipMap = null;
+			statr.authenticated = false;
+			statr.response = "Failed to Pull Statistics";
+			statr.status = false;
+		}
+		return statr;
+	}
+	
+	
+	public static void main(String[] args) {
+		SpringApplication.run(ProxyRestClient.class, args);
+	}
+}

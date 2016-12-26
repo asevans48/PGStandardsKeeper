@@ -1,0 +1,63 @@
+package com.hygenics.proxyclient;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.ImportResource;
+import org.springframework.util.Assert;
+
+import javax.annotation.PostConstruct;
+import javax.sql.DataSource;
+
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+
+
+import com.hygenics.jdbc.DatabaseHandler;
+import org.springframework.jdbc.core.JdbcTemplate;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+/**
+ * The proxy service client configuration. This sets up the rest template for reloading, getting proxies, and forced
+ * refreshing.
+ * 
+ * In order to configure, a file must be placed outside of the classpath at /home/X/proxyservice/config.xml
+ * 
+ * File parameters are:
+ * 
+ *    -setup the datasource (dbcp 2 would be more for the service side)
+ * 	  -setup a ProxyMesenger class with the Service IP address for where the service will be running.
+ * 
+ * @author aevans
+ *
+ */
+@ImportResource("file:/home/aevans/scrape/svn/Properties/ProxyRestText.xml")
+@Configuration
+public class ClientConfig {
+	
+	@Autowired
+	DataSource datasource;
+	
+	@Autowired
+	@Qualifier("jdbcTemplate")
+	JdbcTemplate jdbcTemplateObject;
+	
+
+	@Autowired
+	@Qualifier("DatabaseHandler")
+	DatabaseHandler handler;
+	
+	@Bean
+	public ObjectMapper MappingJackson2HttpMessageConverter(){
+		return new ObjectMapper();
+	}
+	
+	
+	@PostConstruct
+	public void check(){
+		//basic checks that will make the service work. This ensures that a long running error is avoided.
+		Assert.notNull(datasource);
+		Assert.notNull(handler);
+	}
+	
+}

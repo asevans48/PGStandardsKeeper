@@ -1,0 +1,10 @@
+com/hygenics/proxyclient/ProxyRestClient.class
+com/hygenics/proxyclient/ProxyRestClient$OperatingList.class
+com/hygenics/proxyclient/ProxyRestClient$ProxyResponse.class
+com/hygenics/proxyclient/ProxyRestClient$StatsResponse.class
+com/hygenics/proxyclient/ProxyRestClient$Response.class
+com/hygenics/jdbc/DatabaseHandler.class
+com/hygenics/jdbc/DatabaseHandler$ProxyObject.class
+com/hygenics/jdbc/DatabaseHandler$1.class
+com/hygenics/proxyclient/ClientConfig.class
+com/hygenics/matutils/RandomWeightedChoice.class
