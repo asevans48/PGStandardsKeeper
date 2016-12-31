@@ -14,8 +14,9 @@
 		<div class="forms" id="forms">
 			<form name="qform" id="qform" method="POST" action="/postResults">
 					<input type="text" id="query" name="query" value="Field Query"/>
-					<select class="qfields" name="qfield" id="qfield">
+					<select class="qfields" name="qfield" id="qfield" wdith="25">
 						<option selected="selected">Field</option>
+						<option>Table</option>
 						<option>Type</option>
 						<option>Standard</option>
 						<option>Description</option>
@@ -24,10 +25,21 @@
 			</form>
 			<form name = "kform" id ="kform" method="POST" action="/postKeys">
 				<input type="text" id="text" name ="query" value="Key Query"/>
+				<select class="qfields" name="qfield" id="qfield" width="25">
+						<option selected="selected">Table</option>
+						<option>Feild</option>
+						<option>Foreign Table</option>
+						<option>Description</option>
+				</select>
 				<input type="button" class="sbutton" value="Submit" onClick="getKeys()"/>
 			</form>
 			<form name = "iform" id ="iform" method="POST" action="/postIndices">
 				<input type="text" id="text" name ="query" value="Index Query"/>
+				<select class="qfields" name="qfield" id="qfield" width="25">
+						<option selected="selected">Name</option>
+						<option>Tables</option>
+						<option>Keys</option>
+				</select>
 				<input type="button" class="sbutton" value="Submit" onClick="getIndices()"/>
 			</form>
 		</div>
@@ -83,7 +95,7 @@
 		<div class="additions" id="keyAdditions">
 			<div id="additionsDiv">
 				<table id="keyTable" class="additionsTable" name ="keyRecords">
-					<tr><th>Field</th><th>Foreign Table</th><th>Description</th><th>R</th></tr>
+					<tr><th>Table</th><th>Field</th><th>Foreign Table</th><th>Description</th><th>R</th></tr>
 				</table>
 			</div>
 			<div class="subk" id="subk">
@@ -111,6 +123,16 @@
 			<div class="subi" id="subi">
 				
 			</div>
+		</div>
+
+		<!--Genearte DDL -->
+		<div class="ddl" id="ddl">
+			<center>
+			<form id="ddlForm" method="POST" action="/generateDDL">
+				<input type="text" value="schema" size="25" id="schema"/>
+				<input type="button" value="Generate" onClick="generateDDL()"/>
+			</form>
+			</center>
 		</div>
 
 		<!-- footer -->

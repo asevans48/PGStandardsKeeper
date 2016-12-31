@@ -2,7 +2,13 @@ package org.aevans.simplrtek.standards;
 
 import org.aevans.simplrtek.standards.FieldObjectWrapper;
 import org.aevans.simplrtek.standards.FieldObject;
+import org.aevans.simplrtek.standards.IndexObject;
+import org.aevans.simplrtek.standards.IndexUpdateObject;
+import org.aevans.simplrtek.standards.KeyUpdateObject;
+import org.aevans.simplrtek.standards.FieldUpdateObject;
 import org.aevans.simplrtek.jdbc.DatabaseHandler;
+import org.aevans.simplrtek.standards.KeyObject;
+import org.aevans.simplrtek.standards.IndexObject;
 
 import org.apache.commons.io.IOUtils;
 import org.jsoup.Jsoup;
@@ -92,6 +98,32 @@ public class StandardsAppClient {
 		}
 	}
 
+	class IndexResponse{
+		Boolean success = true;
+		List<IndexObject> fields;
+
+		public Boolean getSuccess(){
+			return success;
+		}
+
+		public List<IndexObject> getFields(){
+			return fields;
+		}
+	}
+
+	class KeyResponse{
+		Boolean success = true;
+		List<KeyObject> fields;
+
+		public Boolean getSuccess(){
+			return success;
+		}
+
+		public List<KeyObject> getFields(){
+			return fields;
+		}
+	}
+
 	class StatusResponse{
 		Boolean success = true;
 
@@ -101,6 +133,86 @@ public class StandardsAppClient {
 	}
 
 
+	/**
+	 * Drop a proxy from the mapping. Returns Json instead of HTML
+	 * 
+	 * @param ip
+	 * @param domain
+	 * @return
+	 */
+	@RequestMapping(value = "/updateKeys", method = RequestMethod.POST,produces = "application/json")
+	@ResponseBody StatusResponse updateKeys(@RequestBody List<KeyUpdateObject> updateKeys){
+		StatusResponse sr = new StatusResponse();
+		if(updateKeys.size() > 0){
+			handler.updateKeys(updateKeys);
+		}
+		return sr;
+	}
+
+
+	/**
+	 * Drop a proxy from the mapping. Returns Json instead of HTML
+	 * 
+	 * @param ip
+	 * @param domain
+	 * @return
+	 */
+	@RequestMapping(value = "/updateIndices", method = RequestMethod.POST,produces = "application/json")
+	@ResponseBody StatusResponse updateIndices(@RequestBody List<IndexUpdateObject> updateIndices){
+		StatusResponse sr = new StatusResponse();
+		if(updateIndices.size() > 0){
+			handler.updateIndices(updateIndices);
+		}
+		return sr;
+	}
+
+	/**
+	 * Drop a proxy from the mapping. Returns Json instead of HTML
+	 * 
+	 * @param ip
+	 * @param domain
+	 * @return
+	 */
+	@RequestMapping(value = "/updateFields", method = RequestMethod.POST,produces = "application/json")
+	@ResponseBody StatusResponse updateFields(@RequestBody List<FieldUpdateObject> updateFields){
+		StatusResponse sr = new StatusResponse();
+		if(updateFields.size() > 0){
+			handler.updateFields(updateFields);
+		}
+		return sr;
+	}
+
+
+
+
+	/**
+	 * Drop a proxy from the mapping. Returns Json instead of HTML
+	 * 
+	 * @param ip
+	 * @param domain
+	 * @return
+	 */
+	@RequestMapping(value = "/getKeys", method = RequestMethod.POST,produces = "application/json")
+	@ResponseBody KeyResponse getKeys(@RequestParam("query") String like,@RequestParam("qfield") String field){
+		KeyResponse fr = new KeyResponse();
+		fr.fields = handler.getKeys(like,field);
+		return fr;
+	}
+
+
+	/**
+	 * Drop a proxy from the mapping. Returns Json instead of HTML
+	 * 
+	 * @param ip
+	 * @param domain
+	 * @return
+	 */
+	@RequestMapping(value = "/getIndices", method = RequestMethod.POST,produces = "application/json")
+	@ResponseBody IndexResponse getIndices(@RequestParam("query") String like,@RequestParam("qfield") String field){
+		IndexResponse ir = new IndexResponse();
+		ir.fields = handler.getIndices(like,field);
+		return ir;
+	}
 
 	/**
 	 * Drop a proxy from the mapping. Returns Json instead of HTML
@@ -130,6 +242,41 @@ public class StandardsAppClient {
 		return sr;
 	}
 	
+
+
+	/**
+	 * Drop a proxy from the mapping. Returns Json instead of HTML
+	 * 
+	 * @param ip
+	 * @param domain
+	 * @return
+	 */
+	@RequestMapping(value = "/addIndices", method = RequestMethod.POST,consumes = "application/json",produces = "application/json")
+	@ResponseBody StatusResponse addIndices(@RequestBody List<IndexObject> fields){
+		StatusResponse sr = new StatusResponse();
+		handler.submitIndices(fields);		
+		return sr;
+	}
+
+
+	/**
+	 * Drop a proxy from the mapping. Returns Json instead of HTML
+	 * 
+	 * @param ip
+	 * @param domain
+	 * @return
+	 */
+	@RequestMapping(value = "/addKeys", method = RequestMethod.POST,consumes = "application/json",produces = "application/json")
+	@ResponseBody StatusResponse addKeys(@RequestBody List<KeyObject> fields){
+		StatusResponse sr = new StatusResponse();
+		handler.submitKeys(fields);		
+		return sr;
+	}
+	
+
+
+
+
 	public static void main(String[] args) {
 		SpringApplication.run(StandardsAppClient.class, args);
 	}
